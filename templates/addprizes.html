@@ -1,0 +1,42 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Add New Inventory Item</h4>
+            </div>
+            <div class="card-body">
+                <!-- IMPORTANT: enctype is required for file uploads -->
+                <form action="/add/prizes" method="post" enctype="multipart/form-data">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">prize Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. School Bag" required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" name="amt" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Prize Picture</label>
+                        <input type="file" name="picture" class="form-control" accept="image/png, image/jpeg" required>
+                        <div class="form-text">Accepted formats: JPG, PNG.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus-circle me-2"></i>Add to prizes
+                        </button>
+                        <a href="/prizes" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

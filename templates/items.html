@@ -1,0 +1,56 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3">Inventory Management</h2>
+    <a href="/add/items" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Add New Item
+    </a>
+</div>
+
+{% if items %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for item in items %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <!-- Item Image -->
+            <img src="{{ item['picture'] }}" class="card-img-top" alt="{{ item['itemname'] }}" style="height: 200px; object-fit: cover;">
+            
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <h5 class="card-title">{{ item['itemname'] }}</h5>
+                    <span class="badge bg-info text-dark">{{ item['item_type'] }}</span>
+                </div>
+                
+                <p class="card-text mb-1">
+                    <strong>Price:</strong> {{ item['price'] }} ETB
+                </p>
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="fas fa-warehouse me-1"></i>{{ item['amount'] }} in stock
+                    </small>
+                </p>
+            </div>
+
+            <div class="card-footer bg-transparent border-top-0 pb-3">
+                <div class="d-grid gap-2">
+                    <a href="/delete/item/{{ item['id'] }}" 
+                       class="btn btn-outline-danger btn-sm" 
+                       onclick="return confirm('Are you sure you want to delete this item?')">
+                        <i class="fas fa-trash-alt me-2"></i>Delete Item
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+    <p class="lead">No items found in inventory.</p>
+    <a href="/add/items" class="btn btn-primary">Add your first item</a>
+</div>
+{% endif %}
+
+{% endblock %}

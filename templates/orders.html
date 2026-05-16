@@ -1,0 +1,70 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3">Customer Orders</h2>
+    <span class="badge bg-secondary">{{ orders|length }} Total Orders</span>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Customer</th>
+                        <th>Item</th>
+                        <th>Price (ETB)</th>
+                        <th>Status</th>
+                        <th>Lotto Ticket</th>
+                        <th>Location</th>
+                        <th>Date</th>
+                        <th>Ordered Amount</th>
+                        <th>actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if orders %}
+                        {% for order in orders %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold">{{ user(order['user'])['fullname'] }}</div>
+                                <small class="text-muted">{{ user(order['user'])['phone_number'] }}</small>
+                            </td>
+                            <td>{{ item(order['item'])['itemname'] }}</td>
+                            <td>{{ item(order['item'])['price'] }}</td>
+                            <td>
+                                {% if order['paid_status'] == 1 %}
+                                    <span class="badge rounded-pill bg-success">Paid</span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-warning text-dark">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <code class="fw-bold text-primary">{{ order['lotto_ticket'] }}</code>
+                            </td>
+                            <td>{{ order['location'] }}</td>
+                            <td>
+                                <small>{{ order['created_at'].strftime('%Y-%m-%d %H:%M') if order['created_at'] is not string else order['created_at'] }}</small>
+                            </td>
+                            <td>
+                                <a href="/mark/paid/{{order['order_id']}}">Mark paid</a>
+                            </td>
+                            <td>
+                                <small>{{order['amount'] }} </small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                No orders have been placed yet.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

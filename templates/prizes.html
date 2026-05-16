@@ -1,0 +1,51 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="h3">Prize Management</h2>
+    <!-- Add Prize Button -->
+    <a href="/add/prizes" class="btn btn-warning text-dark">
+        <i class="fas fa-gift me-2"></i>Add New Prize
+    </a>
+</div>
+
+{% if prizes %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for prize in prizes %}
+    <div class="col">
+        <div class="card h-100 shadow-sm border-warning">
+            <!-- Prize Image -->
+            <img src="{{ prize['picture'] }}" class="card-img-top" alt="{{ prize['prize'] }}" style="height: 200px; object-fit: cover;">
+            
+            <div class="card-body">
+                <h5 class="card-title text-uppercase fw-bold">{{ prize['prize'] }}</h5>
+                <p class="card-text text-muted">
+                    <i class="fas fa-layer-group me-2"></i>Quantity: {{ prize['amount'] }}
+                </p>
+            </div>
+
+            <div class="card-footer bg-transparent border-top-0 pb-3">
+                <div class="d-grid">
+                    <a href="/delete/prize/{{ prize['id'] }}" 
+                       class="btn btn-outline-danger btn-sm" 
+                       onclick="return confirm('Are you sure you want to remove this prize?')">
+                        <i class="fas fa-trash-alt me-2"></i>Delete Prize
+                    </a>
+                    <a href="/assign/winner/{{prize['id']}}" style="margin-top: 10px;" class="btn btn-primary">Assign winner</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="text-center py-5">
+    <div class="mb-3">
+        <i class="fas fa-trophy fa-3x text-muted"></i>
+    </div>
+    <p class="lead text-muted">No prizes have been added yet.</p>
+    <a href="/add/prizes" class="btn btn-primary">Create First Prize</a>
+</div>
+{% endif %}
+
+{% endblock %}
