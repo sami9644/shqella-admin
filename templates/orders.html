@@ -28,14 +28,14 @@
                         {% for order in orders %}
                         <tr>
                             <td>
-                                <div class="fw-bold">{{ user(order['user'])['fullname'] }}</div>
-                                <small class="text-muted">{{ user(order['user'])['phone_number'] }}</small>
+                                <div class="fw-bold">{{ user(order['ordered_by'])['fullname'] }}</div>
+                                <small class="text-muted">{{ user(order['ordered_by'])['phone_number'] }}</small>
                             </td>
                             <td>{{ item(order['item'])['itemname'] }}</td>
                             <td>{{ item(order['item'])['price'] }}</td>
                             <td>
                                 {% if order['paid_status'] == 1 %}
-                                    <span class="badge rounded-pill bg-success">Paid</span>
+                                    <span class="badge rounded-pill bg-success">Delivered</span>
                                 {% else %}
                                     <span class="badge rounded-pill bg-warning text-dark">Pending</span>
                                 {% endif %}
@@ -48,10 +48,10 @@
                                 <small>{{ order['created_at'].strftime('%Y-%m-%d %H:%M') if order['created_at'] is not string else order['created_at'] }}</small>
                             </td>
                             <td>
-                                <a href="/mark/paid/{{order['order_id']}}">Mark paid</a>
+                                <small>{{order['amount'] }} </small>
                             </td>
                             <td>
-                                <small>{{order['amount'] }} </small>
+                                 <a href="/mark/paid/{{order['order_id']}}">Mark as delivered!</a>
                             </td>
                         </tr>
                         {% endfor %}
