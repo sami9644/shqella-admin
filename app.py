@@ -80,7 +80,13 @@ def login():
 @app.route("/admin/dashboard")
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    with sqldb() as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM items")
+        itemamt = cur.fetchone()
+        cur.execute("SELECT COUNT(*) FROM orders")
+        orderList = cur.fetchone()
+    return render_template('dashboard.html',items=itemamt,order=orderList)
 
 @app.route("/items")
 @login_required
@@ -221,17 +227,26 @@ def delete_prizes(item_id):
 
 @app.route("/orders")
 @login_required
-def orders():
+def orderLists():
     with sqldb() as conn:
         cur = conn.cursor(cursor_factory=DictCursor)
         cur.execute("SELECT * FROM orders")
-        orders = cur.fetchall()
-    return render_template("orders.html",orders=orders,item=item_info,user=userinfo)
+        order_s = cur.fetchall()
+    return render_template("orders.html",orders=order_s,item=item_info,user=userinfo)
 
 @app.route("/logout")
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
+@app.route("/mark/paid/<orderid>")
+def mark_paid(orderid):
+    with sqldb() as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE orders SET paid_status = %s WHERE order_id = %s",(True,orderid))
+        conn.commit()
+    flash("Order marked as delivered!")
+    return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)
