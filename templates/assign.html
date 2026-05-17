@@ -1,0 +1,45 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12 text-center text-md-start">
+            <span class="fs-4 text-secondary">
+                Choose winner for <b class="text-dark">{{ prize.prize }}</b>
+            </span>
+        </div>
+    </div>
+
+    <!-- Responsive Card Grid -->
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
+        {% for ticket in tickets %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-body d-flex flex-column justify-content-between">
+                    <div>
+                        <!-- User Fullname -->
+                        <h5 class="card-title fw-bold mb-3 text-truncate" title="{{ ticket.fullname }}">
+                            {{ ticket.fullname }}
+                        </h5>
+                        
+                        <!-- Call Button -->
+                        <a href="tel:{{ticket.phone_number}}" class="btn btn-outline-primary btn-sm w-100 mb-3 d-flex align-items-center justify-content-center gap-2">
+                            <i class="bi bi-telephone-fill"></i> Call this user
+                        </a>
+                    </div>
+
+                    <!-- Action Form -->
+                    <form action="/assign/winner/{{prize.id}}" method="post" class="mt-auto">
+                        <input type="hidden" name="lotto" value="{{ticket.lotto_ticket}}">
+                        <button type="submit" class="btn btn-success w-100 fw-semibold">
+                            Assign winner
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

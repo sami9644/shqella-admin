@@ -1,0 +1,83 @@
+{% extends 'dashboard.html' %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-12 col-md-6 text-center text-md-start">
+            <h2 class="fw-bold text-dark mb-1">🎉 Lucky Winners</h2>
+            <p class="text-muted small">Overview of all assigned prize winners</p>
+        </div>
+    </div>
+
+    <!-- Desktop View: Elegant Table (Hidden on small screens) -->
+    <div class="card shadow-sm border-0 d-none d-md-block">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-secondary text-uppercase fs-7 fw-bold">
+                    <tr>
+                        <th class="ps-4" scope="col">Full Name</th>
+                        <th scope="col">Prize Won</th>
+                        <th scope="col">Phone Number</th>
+                        <th class="text-end pe-4" scope="col">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for winner in winners %}
+                    <tr>
+                        <td class="ps-4 fw-semibold text-dark">{{ winner.fullname }}</td>
+                        <td>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-7">
+                                🏆 {{ winner.prize_name }}
+                            </span>
+                        </td>
+                        <td>
+                            <code class="text-muted fw-normal">{{ winner.phone_number }}</code>
+                        </td>
+                        <td class="text-end pe-4">
+                            <a href="tel:{{ winner.phone_number }}" class="btn btn-sm btn-primary px-3 rounded-pill">
+                                <i class="bi bi-telephone-fill small me-1"></i> Call
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-5">
+                            No winners assigned yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Mobile View: Clean Stacked Cards (Hidden on medium/large screens) -->
+    <div class="d-md-none">
+        {% for winner in winners %}
+        <div class="card shadow-sm border-0 mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="fw-bold text-dark mb-0">{{ winner.fullname }}</h6>
+                    <span class="badge bg-success-subtle text-success fs-7">
+                        🏆 {{ winner.prize_name }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                    <span class="text-muted small">
+                        <i class="bi bi-phone me-1"></i>{{ winner.phone_number }}
+                    </span>
+                    <a href="tel:{{ winner.phone_number }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                        <i class="bi bi-telephone-fill small me-1"></i> Call
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            No winners assigned yet.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

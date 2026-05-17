@@ -1,8 +1,9 @@
 from flask import *
-from database import sqldb
+from database import sqldb,isitordered,tickets,realWinners
 from functools import wraps
 from psycopg2.extras import DictCursor
 from supabase import create_client,Client
+import uuid
 
 # Your Supabase credentials (found in Project Settings > API)
 url = "https://uyomlejvshurhgcbijqm.supabase.co"
@@ -109,7 +110,7 @@ def add_items():
         item_type = request.form['item_type']
         pic = request.files['picture']
         file_content = pic.read()
-        file_name = pic.filename
+        file_name = f'{str(uuid.uuid4()).replace("-","")}.{pic.filename.split('.')[-1]}'
         imgurl = upload_file('items',pic,file_content,file_name)
         if imgurl:
             with sqldb() as conn:
@@ -129,34 +130,46 @@ import os
 @login_required
 def delete_item(item_id):
     conn = sqldb()
-    # 1. Fetch the image URL from your DB before deleting the row
     cur = conn.cursor(cursor_factory=DictCursor)
-    cur.execute("SELECT picture FROM items WHERE id = %s", (item_id,))
-    item = cur.fetchone()
     
-    if item:
-        image_url = item['picture']
+    try:
+        # 1. Fetch the image URL from your DB before making changes
+        cur.execute("SELECT picture FROM items WHERE id = %s", (item_id,))
+        item = cur.fetchone()
         
-        # 2. Extract the filename/path from the URL
-        # If your URL is: https://.../inventory/items/bag.jpg
-        # The path in the bucket is: items/bag.jpg
-        file_path = image_url.split('/')[-1] 
-        full_path = f"{file_path}"
+        if item:
+            # Check if it has NOT been ordered yet
+            if not isitordered(item_id):
+                # --- SCENARIO: NEVER ORDERED (Safe to fully delete) ---
+                image_url = item['picture']
+                file_path = image_url.split('/')[-1] 
+                
+                # Delete from Supabase Storage
+                supabase: Client = create_client(url, key)
+                supabase.storage.from_("items").remove(image_url)
+                
+                # Delete from PostgreSQL database entirely
+                cur.execute("DELETE FROM items WHERE id = %s", (item_id,))
+                conn.commit()
+                
+                flash("Item and its image were successfully deleted!", "success")
+                
+            else:
+                # --- SCENARIO: ALREADY ORDERED (Just zero out amount) ---
+                cur.execute("UPDATE items SET amount = 0 WHERE id = %s", (item_id,))
+                conn.commit()
+                
+                flash("Item status updated to unavailable (amount = 0).", "success")
+        else:
+            flash("Item not found.", "warning")
+            
+    except Exception as e:
+        conn.rollback() # Rollback if something crashes mid-way
+        flash(f"Error during operation: {str(e)}", "danger")
+    finally:
+        cur.close()
+        conn.close() # Good practice to close the connection too
         
-        try:
-            supabase: Client = create_client(url, key)
-            # 3. Delete from Supabase Storage
-            supabase.storage.from_("items").remove([full_path])
-            
-            # 4. Now delete from your PostgreSQL database
-            cur.execute("DELETE FROM items WHERE id = %s", (item_id,))
-            conn.commit()
-            
-            flash("Item and its image were successfully deleted!", "success")
-        except Exception as e:
-            flash(f"Error during deletion: {str(e)}", "danger")
-    
-    cur.close()
     return redirect(url_for('items'))
 
 @app.route("/prizes")
@@ -166,7 +179,9 @@ def prizes():
         cur = conn.cursor(cursor_factory=DictCursor)
         cur.execute("SELECT * FROM prizes")
         prizes = cur.fetchall()
-    return render_template("prizes.html",prizes=prizes)
+        cur.execute("SELECT * FROM winner")
+        winners=cur.fetchall()
+    return render_template("prizes.html",prizes=prizes,winners=winners)
 
 @app.route("/add/prizes",methods=['GET','POST'])
 @login_required
@@ -177,7 +192,8 @@ def addprizes():
         prize_name = request.form['name']
         amt = request.form['amt']
         picture = request.files['picture']
-        prize_url = upload_file('prizes',picture,picture.read(),picture.filename)
+        filename = f'{str(uuid.uuid4()).replace("-",'')}.{picture.filename.split(".")[-1]}'
+        prize_url = upload_file('prizes',picture,picture.read(),filename)
         if prize_url:
             with sqldb() as conn:
                 cur = conn.cursor()
@@ -212,7 +228,7 @@ def delete_prizes(item_id):
         try:
             supabase: Client = create_client(url, key)
             # 3. Delete from Supabase Storage
-            supabase.storage.from_("prizes").remove([full_path])
+            supabase.storage.from_("prizes").remove([file_path])
             
             # 4. Now delete from your PostgreSQL database
             cur.execute("DELETE FROM prizes WHERE id = %s", (item_id,))
@@ -234,12 +250,8 @@ def orderLists():
         order_s = cur.fetchall()
     return render_template("orders.html",orders=order_s,item=item_info,user=userinfo)
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
-
 @app.route("/mark/paid/<orderid>")
+@login_required
 def mark_paid(orderid):
     with sqldb() as conn:
         cur = conn.cursor()
@@ -247,6 +259,38 @@ def mark_paid(orderid):
         conn.commit()
     flash("Order marked as delivered!")
     return redirect(url_for('dashboard'))
+
+@app.route("/assign/winner/<prize>",methods=['GET',"POST"])
+@login_required
+def assign_winner(prize):
+    if request.method == "GET":
+        with sqldb() as conn:
+            cur = conn.cursor(cursor_factory=DictCursor)
+            cur.execute("SELECT * FROM prizes WHERE id = %s",(prize,))
+            prizeinfo = cur.fetchone()
+        return render_template("assign.html",tickets=tickets(),prize=prizeinfo)
+    elif request.method == 'POST':
+        lotto_id = request.form.get('lotto')
+        with sqldb() as conn:
+            cur = conn.cursor()
+            cur.execute("INSERT INTO winner(user_,prize) VALUES(%s,%s)",(lotto_id,prize))
+            cur.execute("UPDATE prizes SET amount = amount-1 WHERE id = %s",(prize,))
+            conn.commit()
+        flash("Winner successfully assigned!")
+        return redirect(url_for('dashboard'))
+    else:
+        return abort(405)
+
+
+@app.route("/winners")
+@login_required
+def winners():
+    return render_template("winners.html",winners=realWinners())
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
